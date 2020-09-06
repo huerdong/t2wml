@@ -1,13 +1,13 @@
 from t2wml.api import Sheet, SpreadsheetFile, Wikifier, KnowledgeGraph, Project
-from backend.caching import CacheHolder
+from caching import CacheHolder
 
 class CalcParams:
-    def __init__(self, project_path, data_path, sheet_name, yaml_path=None, wiki_paths=None):
+    def __init__(self, project_path, data_path, sheet_name, yaml_path=None, wikifier_paths=None):
         self.project_path=project_path
         self.data_path=data_path
         self.sheet_name=sheet_name
         self.yaml_path=yaml_path
-        self.wiki_paths=wiki_paths or []
+        self.wiki_paths=wikifier_paths or []
     
     @property
     def sheet(self):

@@ -22,43 +22,19 @@ class ProjectNotFoundException(WebException):
 class ProjectAlreadyExistsException(WebException):
     message = "Cannot create new project in folder with existing project"
 
-class NoFilePartException(WebException):
-    message = "Missing file parameter in the upload request"
-
-
 class BlankFileNameException(WebException):
     message = "Resource not selected for uploading"
 
+class MissingFileException(WebException):
+    code=404
+    message = "File not found"
 
-class AuthenticationFailureException(WebException):
-    message = "Authentication failed"
-
-
-class InvalidRequestException(WebException):
-    message = "Resource requested without appropriate arguments"
-
-
-class YAMLEvaluatedWithoutDataFileException(WebException):
-    message = "Cannot evaluate YAML file without the data file"
-
-
-class MissingYAMLFileException(WebException):
-    message = "YAML file not found"
-
-
-class CellResolutionWithoutYAMLFileException(WebException):
-    message = "Cannot resolve cell without the YAML file"
-
-
-class WikifyWithoutDataFileException(WebException):
-    message = "Wikification cannot be done without the data file"
-
+class FileAlreadyExistsException(WebException):
+    message = "A file with the same name as the file you are importing already exists in the project folder"
 
 class FileTypeNotSupportedException(WebException):
     message = "This file type is currently not supported"
 
 # possibly to be deleted
-
-
 class InvalidYAMLFileException(WebException):
     message = "YAML file is either empty or not valid"
