@@ -1,7 +1,7 @@
 /**
  * Entry point of the Election app.
  */
-import { app, BrowserWindow, EventEmitter, ipcMain } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import * as path from 'path';
 import * as url from 'url';
 import treeKill from 'tree-kill';
@@ -9,11 +9,9 @@ import * as fs from 'fs';
 
 import { spawn, ChildProcess } from 'child_process';
 import axios from 'axios';
-import { ConfigManager } from './config';
+import { config } from './config';
 import MainMenuManager from './menu';
-import Settings from './settings';
-
-const config = new ConfigManager();
+import { RendererEventListener } from './renderer-event-listener';
 
 /* Splash Screen */
 let splashWindow: Electron.BrowserWindow | null;
@@ -39,22 +37,10 @@ function openSplashScreen(): void {
     });
 }
 
-/* Settings */
-const settings = new Settings();
-    
-// Hook into the 'show-project' event:
-// 1. Update the settings class when receiving the event.
-// 2. Call the menu manager's set main menu method
-
-ipcMain.on('show-project', (sender: EventEmitter, folder: string) => {
-    settings.addRecentlyUsed(folder);
-    mainMenuManager!.setMainMenu();
-});
-
 /* Main Window */
 let mainWindow: Electron.BrowserWindow | null;
 let mainMenuManager: MainMenuManager | null;
-
+const rendererEventListener = new RendererEventListener(); // Used by splash-screen and main window
 
 function createMainWindow(): void {
     // Create the browser window.
@@ -63,7 +49,7 @@ function createMainWindow(): void {
         width: 1600,
         show: false,
     });
-
+    
     // and load the index.html of the app.
     mainWindow.loadURL(
         url.format({
@@ -73,10 +59,11 @@ function createMainWindow(): void {
         })
     );
 
+    mainMenuManager = new MainMenuManager(mainWindow!);
+    mainMenuManager!.setMainMenu();
+    rendererEventListener.mainMenuManager = mainMenuManager;
 
     mainWindow.once('ready-to-show', () => {
-        mainMenuManager = new MainMenuManager(mainWindow!, settings);
-        mainMenuManager.setMainMenu();
         mainWindow!.show();
         splashWindow!.close();
         splashWindow = null;

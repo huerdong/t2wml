@@ -9,13 +9,23 @@ import { ipcMain } from 'electron';
 const packageJson = require('../../package.json');  // Couldn't figure out how to import package.json, so resorting to require
 
 export class ConfigManager implements AppConfig {
+    private static _instance?: ConfigManager;
+
+    public static get instance() {
+        if (!ConfigManager._instance) {
+            ConfigManager._instance = new ConfigManager();
+        }
+
+        return ConfigManager._instance;
+    }
+
     public mode: Mode;
     public platform: Platform;
     public version: string;
     public backend: string;
     public defaultSparqlEndpoint: string;
 
-    constructor() {
+    private constructor() {
         this.mode = (process.env.NODE_ENV === 'production') ? 'prod' : 'dev';
 
         if (process.platform === 'win32') {
@@ -34,11 +44,7 @@ export class ConfigManager implements AppConfig {
         
         this.backend = 'http://localhost:13000/';
         this.defaultSparqlEndpoint ="https://dsbox02.isi.edu:8888/bigdata/namespace/wdq/sparql"
-
-        ipcMain.on('get-config', (event: any) => this.getConfig(event));
-    }
-
-    private getConfig(event: any) {
-        event.returnValue = this;
     }
 }
+
+export const config = ConfigManager.instance;
