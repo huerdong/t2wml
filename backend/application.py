@@ -23,16 +23,6 @@ from backend.t2wml_annotation_integration import AnnotationIntegration
 debug_mode = False
 
 
-def get_project(project_id):
-    try:
-        project=Project.get(project_id)
-    except Exception as e:
-        raise web_exceptions.ProjectNotFoundException
-    update_t2wml_settings(project)
-    return project
-        
-
-
 def json_response(func):
     def wrapper(*args, **kwargs):
         try:
@@ -54,6 +44,165 @@ def json_response(func):
     return wrapper
 
 
+##########NEW CODE:
+
+
+#ALL THE POSTS/PUTS (and one weird get)
+
+@app.route('/api/project', methods=['POST'])
+@json_response
+def create_project():
+    """
+    This route creates an empty project file in a folder that has no project already
+    :return:
+    """
+    project_path = request.form['project_path']
+    #check we're not overwriting existing project
+    project_file = Path(project_path) / ".t2wmlproj"
+    if project_file.is_file():
+        raise web_exceptions.ProjectAlreadyExistsException(project_path)
+    #create project
+    project=apiProject(project_path)
+    project.title=Path(project_path).stem
+    project.save()
+    #return project json
+    response = dict(project=project.__dict__)
+    return response, 201
+
+
+@app.route('/api/project', methods=['GET'])
+@json_response
+def load_project():
+    """
+    This route loads an existing project
+    :return:
+    """
+    project_path=request.args['project_path']
+    project=apiProject.load(project_path)
+    #return project json
+    response = dict(project=project.__dict__)
+    return response, 201
+
+@app.route('/api/data', methods=['PUT'])
+@json_response
+def put_data():
+    """
+    This route adds a data file to the project
+    :return:
+    """
+    project_path=request.args['project_path']
+    project=apiProject.load(project_path)
+    data_path=request.args['data_path']
+    project.add_data_file(data_path)
+    project.save()
+    #TODO return data file table and sheets
+    return {}, 201
+
+@app.route('/api/wikifier', methods=['PUT'])
+@json_response
+def put_wikifier():
+    """
+    This route adds a data file to the project
+    :return:
+    """
+    project_path=request.args['project_path']
+    project=apiProject.load(project_path)
+    wikifier_path=request.args['wikifier_path']
+    project.add_wikifier_file(wikifier_path)
+    project.save()
+    #TODO return wikifier contents in a table
+    return {}, 201
+
+@app.route('/api/wikidata', methods=['PUT'])
+@json_response
+def put_wikidata():
+    """
+    This route adds a yaml file to the project
+    :return:
+    """
+    project_path=request.args['project_path']
+    project=apiProject.load(project_path)
+    wikidata_path=request.args['wikidata_path']
+    #project.add_wikidata_file(wikidata_path) #TODO: needs to be implemented
+    project.save()
+    #TODO add to database
+    #TODO return what was added/updated/failed
+    return {}, 201
+
+@app.route('/api/yaml', methods=['PUT'])
+@json_response
+def put_yaml():
+    """
+    This route adds a data file to the project
+    :return:
+    """
+    project_path=request.args['project_path']
+    project=apiProject.load(project_path)
+    yaml_path=request.args['yaml_path']
+    project.add_yaml_file(yaml_path)
+    data_path=request.args.get('data_path')
+    sheet_name=request.args.get('sheet_name')
+    if data_path:
+        project.associate_yaml_with_sheet(yaml_path, data_path, sheet_name)
+    project.save()
+    return {}, 201 #nothing to return
+
+@app.route('/api/wikify_region', methods=['POST'])
+@json_response
+def wikify_region():
+    project_path=request.args['project_path']
+    data_path=request.args['data_path']
+    sheet_name=request.args['sheet_name']
+    #TOD0
+    action = request.form["action"]
+    region = request.form["region"]
+    context = request.form["context"]
+
+
+#ALL THE GETS
+
+@app.route('/api/table', methods=['GET'])
+@json_response
+def get_table():
+    project_path=request.args['project_path']
+    data_path=request.args['data_path']
+    sheet_name=request.args['sheet_name']
+    yaml_path=request.args['yaml_path']
+    wikifier_paths=request.args.getlist['wikifier_path']
+    #TOD0
+
+
+@app.route('/api/wikifier', methods=['GET'])
+@json_response
+def get_wikifier():
+    project_path=request.args['project_path']
+    data_path=request.args['data_path']
+    sheet_name=request.args['sheet_name']
+    wikifier_paths=request.args.getlist['wikifier_path']
+    #TOD0
+
+@app.route('/api/download/<filetype>', methods=['GET'])
+@json_response
+def get_download(filetype):
+    project_path=request.args['project_path']
+    data_path=request.args['data_path']
+    sheet_name=request.args['sheet_name']
+    yaml_path=request.args['yaml_path']
+    wikifier_paths=request.args.getlist['wikifier_path']
+    #TOD0
+
+
+@app.route('/api/qnode/<qid>', methods=['GET'])
+@json_response
+def get_qnode(qid):
+    project_path=request.args['project_path']
+    project=None #TODO
+    label = get_qnode_label(qid, project)
+    return {"label": label}, 200
+
+
+######################OLD CODE
+
 @app.route('/api/projects', methods=['GET'])
 @json_response
 def get_project_meta():
@@ -68,43 +217,6 @@ def get_project_meta():
     data['projects'] = get_project_details()
     return data, 200
 
-
-@app.route('/api/project', methods=['POST'])
-@json_response
-def create_project():
-    """
-    This route creates a project
-    :return:
-    """
-    response = dict()
-    directory = request.form['path']
-    #check we're not overwriting existing project
-    project_file = Path(directory) / ".t2wmlproj"
-    if project_file.is_file():
-        raise web_exceptions.ProjectAlreadyExistsException(directory)
-    #create project
-    api_proj=apiProject(directory)
-    api_proj.title=Path(directory).stem
-    api_proj.save()
-    #...and the database id for it
-    project = Project.load(api_proj)
-    response['pid'] = project.id
-    return response, 201
-
-
-@app.route('/api/project/load', methods=['POST'])
-@json_response
-def load_project():
-    """
-    This route loads an existing project
-    :return:
-    """
-    path=request.form['path']
-    project=Project.query.filter_by(file_directory=path).first()
-    if not project:
-        proj=apiProject.load(path)
-        project=Project.load(proj)
-    return {"pid":project.id}, 201
 
 
 
