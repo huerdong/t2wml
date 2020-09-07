@@ -47,7 +47,7 @@ def json_response(func):
 ##########NEW CODE:
 
 
-#ALL THE POSTS/PUTS of files/projects (and one weird get)
+#OPEN/LOAD/CHANGE PROJECT
 
 @app.route('/api/project', methods=['POST'])
 @json_response
@@ -82,6 +82,36 @@ def load_project():
     response = dict(project=project.__dict__)
     return response, 201
 
+
+@app.route('/api/settings', methods=['GET', 'PUT'])
+@json_response
+def put_settings():
+    project_path=request.args['project_path']
+    project=apiProject.load(project_path)
+
+    if request.method=='POST':
+        endpoint = request.form.get("endpoint", None)
+        if endpoint:
+            project.sparql_endpoint = endpoint
+        warn = request.form.get("warnEmpty", None)
+        if warn is not None:
+            project.warn_for_empty_cells=warn.lower()=='true'
+        title = request.form.get("title", None)
+        if title:
+            project.title = title
+        project.save()
+    
+    response = {
+        "endpoint": project.sparql_endpoint,
+        "warnEmpty": project.warn_for_empty_cells,
+        "title": project.title
+    }
+
+    return response, 200
+
+
+#PUT FILES (and one post)
+
 @app.route('/api/data', methods=['PUT'])
 @json_response
 def put_data():
@@ -92,7 +122,10 @@ def put_data():
     project_path=request.args['project_path']
     project=apiProject.load(project_path)
     data_path=request.args['data_path']
-    project.add_data_file(data_path)
+    overwrite=request.args.get("overwrite", False)
+    if overwrite:
+            overwrite=overwrite.lower()=='true'
+    project.add_data_file(data_path, copy_from_elsewhere=True, overwrite=overwrite)
     project.save()
     response=dict(project=project.__dict__)
     calc_params=CalcParams(project_path, data_path, None)
@@ -110,7 +143,10 @@ def put_wikifier():
     project_path=request.args['project_path']
     project=apiProject.load(project_path)
     wikifier_path=request.args['wikifier_path']
-    project.add_wikifier_file(wikifier_path)
+    overwrite=request.args.get("overwrite", False)
+    if overwrite:
+            overwrite=overwrite.lower()=='true'
+    project.add_wikifier_file(wikifier_path, copy_from_elsewhere=True, overwrite=overwrite)
     project.save()
     response=dict(project=project.__dict__)
     #response["wikifierData"]=None #TODO
@@ -126,7 +162,10 @@ def put_wikidata():
     project_path=request.args['project_path']
     project=apiProject.load(project_path)
     wikidata_path=request.args['wikidata_path']
-    project.add_wikidata_file(wikidata_path) #TODO: needs to be implemented
+    overwrite=request.args.get("overwrite", False)
+    if overwrite:
+            overwrite=overwrite.lower()=='true'
+    project.add_wikidata_file(wikidata_path, copy_from_elsewhere=True, overwrite=overwrite) #TODO: needs to be implemented
     project.save()
     #TODO add to database
     #TODO return what was added/updated/failed
@@ -142,7 +181,10 @@ def put_yaml():
     project_path=request.args['project_path']
     project=apiProject.load(project_path)
     yaml_path=request.args['yaml_path']
-    project.add_yaml_file(yaml_path)
+    overwrite=request.args.get("overwrite", False)
+    if overwrite:
+            overwrite=overwrite.lower()=='true'
+    yaml_path=project.add_yaml_file(yaml_path, copy_from_elsewhere=True, overwrite=overwrite)
     data_path=request.args.get('data_path')
     sheet_name=request.args.get('sheet_name')
     if data_path:
@@ -184,7 +226,7 @@ def wikify_region():
         data['problemCells'] = error_dict
     else:
         data['problemCells'] = False
-
+    data["project"]=project.__dict__
     return data, 200
 
 
@@ -262,33 +304,7 @@ def get_cell_statement(col, row):
     return data, 200
 
 
-#SOME MORE PUTS BUT IT'S ALL EDITING PRoJECTS:
 
-@app.route('/api/settings', methods=['GET', 'PUT'])
-@json_response
-def put_settings():
-    project_path=request.args['project_path']
-    project=apiProject.load(project_path)
-
-    if request.method=='POST':
-        endpoint = request.form.get("endpoint", None)
-        if endpoint:
-            project.sparql_endpoint = endpoint
-        warn = request.form.get("warnEmpty", None)
-        if warn is not None:
-            project.warn_for_empty_cells=warn.lower()=='true'
-        title = request.form.get("title", None)
-        if title:
-            project.title = title
-        project.save()
-    
-    response = {
-        "endpoint": project.sparql_endpoint,
-        "warnEmpty": project.warn_for_empty_cells,
-        "title": project.title
-    }
-
-    return response, 200
     
     
 
