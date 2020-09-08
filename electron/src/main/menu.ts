@@ -3,14 +3,18 @@ import { BrowserWindow, Menu, MenuItemConstructorOptions, dialog } from 'electro
 
 import { config } from './config';
 import { settings } from './settings';
+import { uiState } from './ui-state';
+import { rendererNotifier } from './renderer-notifier';
 
 export default class MainMenuManager {
     private recentlyUsed: MenuItemConstructorOptions[] = [];
+    private projectSubMenu: MenuItemConstructorOptions[] = [];
 
     constructor(private mainWindow: BrowserWindow) { }
 
     public setMainMenu() {
         this.fillRecentlyUsed();
+        this.fillProjectSubMenu();
         const menu = this.buildMainMenu();
         Menu.setApplicationMenu(menu);
     }
@@ -51,6 +55,10 @@ export default class MainMenuManager {
                 ]
             },
             {
+                label: 'Project',
+                submenu: this.projectSubMenu,
+            },
+            {
                 label: 'View',
                 submenu: [
                     { role: 'zoomin' },
@@ -63,8 +71,7 @@ export default class MainMenuManager {
             {
                 label: 'Debug',
                 submenu: [
-                    { role: 'reload' },
-                    { role: 'forcereload' },
+                    { label: 'Reload App', click: () => this.onReloadAppClick() },
                     { role: 'toggledevtools' },
                 ]
             },
@@ -92,6 +99,20 @@ export default class MainMenuManager {
         this.recentlyUsed = subMenu as MenuItemConstructorOptions[];
     }
 
+    private fillProjectSubMenu() {
+        const enabled = uiState.displayMode === 'project';
+        this.projectSubMenu = [{ 
+            label: 'Refresh', 
+            accelerator: config.platform === 'mac' ? 'Cmd+R' : 'F5',
+            click: () => this.onRefreshProjectClick(),
+            enabled,
+        }, {
+            label: 'Settings...',
+            click: () => this.onProjectSettingsClick(),
+            enabled,
+        }];
+    }
+
     public onNewProjectClick() {
         const folders = dialog.showOpenDialog( this.mainWindow!, {
                 title: "Open Project Folder",
@@ -99,7 +120,7 @@ export default class MainMenuManager {
             });
 
         if (folders) {
-            this.mainWindow!.webContents.send('new-project', folders[0]);
+            rendererNotifier.newProject(folders[0]);
         }
     }
 
@@ -115,12 +136,24 @@ export default class MainMenuManager {
         if (files) {
             const index = files[0].lastIndexOf('\\');
             const path =  files[0].substring(0, index);
-            this.mainWindow!.webContents.send('open-project', path);
+            rendererNotifier.openProject(path);
         }
     }
 
     private onOpenRecentProjectClick(folder: string) {
-        this.mainWindow!.webContents.send('open-project', folder);
+        rendererNotifier.openProject(folder);
+    }
+
+    private onReloadAppClick() {
+        this.mainWindow!.webContents.reloadIgnoringCache();
+    }
+
+    private onRefreshProjectClick() {
+        rendererNotifier.refreshProject();
+    }
+
+    private onProjectSettingsClick() {
+        rendererNotifier.projectSettings();
     }
 
     private onClearRecentlyOpenedClick() {

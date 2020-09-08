@@ -26,6 +26,7 @@ import ToastMessage from '../common/toast';
 import { observer } from "mobx-react";
 import wikiStore from '../data/store';
 import Settings from './settings';
+import { ipcRenderer } from 'electron';
 
 interface ProjectState {
   showSettings: boolean;
@@ -72,6 +73,8 @@ class Project extends Component<ProjectProps, ProjectState> {
     } else {
       console.error("There is no project id.")
     }
+    ipcRenderer.on('refresh-project', () => this.onRefreshProject());
+    ipcRenderer.on('project-settings', () => this.onShowSettingsClicked());
   }
 
   componentDidUpdate(prevProps: ProjectProps) {
@@ -141,6 +144,10 @@ class Project extends Component<ProjectProps, ProjectState> {
       wikiStore.table.showSpinner = false;
       wikiStore.wikifier.showSpinner = false;
     });
+  }
+
+  onRefreshProject() {
+    this.loadProject();
   }
 
   onShowSettingsClicked() {
