@@ -4,10 +4,12 @@ import { ipcRenderer } from 'electron';
 class ProjectState {
     @observable public pid: string;
     @observable public path?: string;
+    @observable public updateFiles: (project: any) => void;
 
     constructor() {
         this.pid = '';
         this.path = undefined;
+        this.updateFiles = () => undefined;
     }
 }
 

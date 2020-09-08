@@ -19,6 +19,7 @@ import { LOG, ErrorMessage } from '../common/general';
 import Editors from './editor';
 import Output from './output/output';
 import TableViewer from './table-viewer/table-viewer';
+import Files from './files';
 import RequestService from '../common/service';
 import ToastMessage from '../common/toast';
 
@@ -93,7 +94,10 @@ class Project extends Component<ProjectProps, ProjectState> {
 
 
       // do something here
-      const { tableData, yamlData, wikifierData, settings } = json;
+      const { project, tableData, yamlData, wikifierData, settings } = json;
+
+      // update projevt files
+      wikiStore.project.updateFiles(project);
 
       // load table data
       wikiStore.table.updateTableData(tableData);
@@ -198,7 +202,10 @@ class Project extends Component<ProjectProps, ProjectState> {
         {/* content */}
         <div>
           <SplitPane className="p-3" split="vertical" defaultSize="55%" minSize={300} maxSize={-300} style={{ height: "calc(100vh - 50px)", background: "#f8f9fa" }}>
-            <TableViewer />
+            <SplitPane className="" split="vertical" defaultSize="20%" minSize={200} maxSize={-200}>
+              <Files/>
+              <TableViewer />
+              </SplitPane>
             <SplitPane className="" split="horizontal" defaultSize="60%" minSize={200} maxSize={-200}>
               <Editors />
               <Output />
