@@ -32,6 +32,7 @@ interface ProjectState {
   showSettings: boolean;
   endpoint: string;
   warnEmpty: boolean;
+  name: string;
 
   showSpinner: boolean;
   errorMessage: ErrorMessage;
@@ -60,6 +61,7 @@ class Project extends Component<ProjectProps, ProjectState> {
       showSettings: false,
       endpoint: '',
       warnEmpty: false,
+      name: '',
 
       showSpinner: false,
 
@@ -68,6 +70,8 @@ class Project extends Component<ProjectProps, ProjectState> {
   }
 
   componentDidMount() {
+    console.log("componentDidMount, props.id,",  this.props.id)
+
     if (this.props.id) {
       this.loadProject();
     } else {
@@ -78,6 +82,7 @@ class Project extends Component<ProjectProps, ProjectState> {
   }
 
   componentDidUpdate(prevProps: ProjectProps) {
+    console.log("componentDidUpdate, props.id, prev id==", this.props.id, prevProps.id)
     if (this.props.id !== prevProps.id) {
       this.loadProject();
     }
@@ -89,12 +94,13 @@ class Project extends Component<ProjectProps, ProjectState> {
     wikiStore.wikifier.showSpinner = true;
 
     // fetch project files
+    console.log("load project", this.props.id)
     console.log("<App> -> %c/get_project_files%c for previous files", LOG.link, LOG.default);
     this.requestService.getProjectFiles(this.props.id).then(json => {
       console.log("<App> <- %c/get_project_files%c with:", LOG.link, LOG.default);
       console.log(json);
-      document.title = json.name;
-
+      document.title = 't2wml: ' + json.name;
+      this.setState({name: json.name});
 
       // do something here
       const { project, tableData, yamlData, wikifierData, settings } = json;
@@ -190,6 +196,7 @@ class Project extends Component<ProjectProps, ProjectState> {
     return (
       <div>
         <Navbar
+          name={this.state.name}
           showSettings={true}
           onShowSettingsClicked={() => this.onShowSettingsClicked()} />
 
