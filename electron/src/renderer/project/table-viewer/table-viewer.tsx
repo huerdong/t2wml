@@ -247,7 +247,7 @@ class TableViewer extends Component<{}, TableState> {
     });
   }
 
-  handleSelectCell(params: any) {
+  async handleSelectCell(params: any) {
     this.setState({ errorMessage: {} as ErrorMessage });
     // remove current status
     this.updateSelectedCell();
@@ -272,19 +272,13 @@ class TableViewer extends Component<{}, TableState> {
     wikiStore.table.showSpinner = true;
     wikiStore.output.showSpinner = true;
 
-    // send request
-    console.log("<TableViewer> -> %c/resolve_cell%c for cell: %c" + colName + rowName + "%c " + value, LOG.link, LOG.default, LOG.highlight, LOG.default);
-    this.requestService.resolveCell(this.pid, colName, rowName).then((json) => {
+    try {
+      // send request
+      console.log("<TableViewer> -> %c/resolve_cell%c for cell: %c" + colName + rowName + "%c " + value, LOG.link, LOG.default, LOG.highlight, LOG.default);
+      const json = await this.requestService.resolveCell(this.pid, colName, rowName);
       console.log("<TableViewer> <- %c/resolve_cell%c with:", LOG.link, LOG.default);
       console.log(json);
 
-    //   const { error } = json;
-    //   // if failure      
-    //   if (error) {
-    //     throw {errorDescription: error.value} as ErrorMessage;
-    //   }
-
-      // else, success
       const {internalErrors} = json;
       if (internalErrors){
             console.log(internalErrors);
@@ -294,7 +288,7 @@ class TableViewer extends Component<{}, TableState> {
       // follow-ups (success)
       wikiStore.output.showSpinner = false;
       wikiStore.table.showSpinner = false;
-    }).catch((error: ErrorMessage) => {
+    } catch(error) {
       console.log(error);
     //   error.errorDescription += "\n\nCannot resolve cell!";
       this.setState({ errorMessage: error });
@@ -302,7 +296,7 @@ class TableViewer extends Component<{}, TableState> {
       // follow-ups (failure)
       wikiStore.output.showSpinner = false;
       wikiStore.table.showSpinner = false;
-    });
+    }
   }
 
   handleSelectSheet(event: any) {
