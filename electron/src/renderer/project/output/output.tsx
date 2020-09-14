@@ -25,7 +25,8 @@ interface OutputState {
   valueCol: string | null;
   valueRow: string | null;
   value: string | null;
-  unit: string | null;
+  unitName: string | null;
+  unitID: string | null;
   itemID: string | null;
   itemName: string | null;
   itemCol: string | undefined;
@@ -66,7 +67,8 @@ class Output extends Component<{}, OutputState> {
       valueCol: null,
       valueRow: null,
       value: null,
-      unit: null,
+      unitName: null,
+      unitID: null,
       itemID: null,
       itemName: null,
       itemCol: undefined,
@@ -204,12 +206,16 @@ class Output extends Component<{}, OutputState> {
     this.setState({ currCol: colName, currRow: rowName });
 
     // unit
-    //todo- add check if start with P or Q
     if (json["statement"]["unit"]) {
-      const unit = json["statement"]["unit"];
-      this.setState({ unit: qnodesLabel[unit] });
+      let unitName = json["statement"]["unit"];
+      let unitID = null;
+      if (/^[PQ]\d+$/.test(unitName)) {
+        unitID = unitName;
+        unitName = qnodesLabel[unitName];
+      }
+      this.setState({ unitName: unitName, unitID: unitID });
     } else {
-      this.setState({ unit: null });
+      this.setState({ unitName: null });
     }
 
     // qualifiers
@@ -250,6 +256,8 @@ class Output extends Component<{}, OutputState> {
       valueCol: null,
       valueRow: null,
       value: null,
+      unitName: null,
+      unitID: null,
       itemID: null,
       itemName: null,
       itemCol: undefined,
@@ -310,7 +318,8 @@ class Output extends Component<{}, OutputState> {
                 propertyID={this.state.propertyID}
                 propertyName={this.state.propertyName}
                 value={this.state.value}
-                unit={this.state.unit}
+                unitName={this.state.unitName}
+                unitID={this.state.unitID}
                 qualifiers={this.state.qualifiers}
             />
             </div> : null }
