@@ -28,6 +28,7 @@ interface ProjectState {
   showSettings: boolean;
   endpoint: string;
   warnEmpty: boolean;
+  calendar: string;
   name: string;
   errorMessage: ErrorMessage;
 }
@@ -55,6 +56,7 @@ class Project extends Component<ProjectProps, ProjectState> {
       showSettings: false,
       endpoint: '',
       warnEmpty: false,
+      calendar: '',
       name: '',
 
       errorMessage: {} as ErrorMessage,
@@ -154,6 +156,7 @@ class Project extends Component<ProjectProps, ProjectState> {
         this.setState({
           endpoint: data.endpoint,
           warnEmpty: data.warnEmpty,
+          calendar: data.handleCalendar,
           showSettings: true
         });
       });
@@ -168,6 +171,7 @@ class Project extends Component<ProjectProps, ProjectState> {
     const formData = new FormData();
     formData.append("endpoint", wikiStore.settings.sparqlEndpoint);
     formData.append("warnEmpty", wikiStore.settings.warnEmpty.toString());
+    formData.append("handleCalendar", wikiStore.settings.calendar);
 
     // TODO: Switch to async/await
     this.requestService.updateSettings(this.props.path, formData).catch((error: ErrorMessage) => {
@@ -195,6 +199,7 @@ class Project extends Component<ProjectProps, ProjectState> {
         <Settings showSettings={this.state.showSettings}
           endpoint={this.state.endpoint}
           warnEmpty={this.state.warnEmpty}
+          calendar={this.state.calendar}
           handleSaveSettings={() => this.handleSaveSettings()}
           cancelSaveSettings={() => this.cancelSaveSettings()} />
 

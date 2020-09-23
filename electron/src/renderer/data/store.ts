@@ -35,10 +35,12 @@ class TabletState {
 class SettingsState {
     @observable public sparqlEndpoint: string;
     @observable public warnEmpty: boolean;
+    @observable public calendar: string;
 
     constructor() {
         this.sparqlEndpoint = '';
         this.warnEmpty = false;
+        this.calendar = '';
     }
 }
 
