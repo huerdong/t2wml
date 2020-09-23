@@ -389,17 +389,22 @@ def update_settings():
     project_folder = get_project_folder()
     project = get_project(project_folder)
     
-    endpoint = request.form.get("endpoint", None)
-    if endpoint:
-        project.sparql_endpoint = endpoint
-    warn = request.form.get("warnEmpty", None)
-    if warn is not None:
-        project.warn_for_empty_cells=warn.lower()=='true'
-    project.save()
-    update_t2wml_settings(project)
+    if request.method =="PUT":
+        endpoint = request.form.get("endpoint", None)
+        if endpoint:
+            project.sparql_endpoint = endpoint
+        warn = request.form.get("warnEmpty", None)
+        if warn is not None:
+            project.warn_for_empty_cells=warn.lower()=='true'
+        calendar=request.form.get("handleCalendar", None)
+        if calendar:
+            project.handle_calendar=calendar
+        project.save()
+        update_t2wml_settings(project)
     response = {
         "endpoint":project.sparql_endpoint,
-        "warnEmpty":project.warn_for_empty_cells
+        "warnEmpty":project.warn_for_empty_cells,
+        "handleCalendar":project.handle_calendar
     }
     return response, 200 
 
